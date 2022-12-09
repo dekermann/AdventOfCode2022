@@ -30,37 +30,31 @@ function snake(input, knots) {
     let currentPositions = [...new Array(knots)].map(() => [...new Array(2)].map(() => 0));
     for (let i = 0; i < input.length; ++i) {
         let move = input[i].split(' ');
-        switch (move[0]) {
-            case 'U':
-                currentPositions[0][0] += parseInt(move[1]);
-                break;
-            case 'D':
-                currentPositions[0][0] -= parseInt(move[1]);
-                break;
-            case 'L':
-                currentPositions[0][1] -= parseInt(move[1]);
-                break;
-            case 'R':
-                currentPositions[0][1] += parseInt(move[1]);
-                break;
+        let moveParsed = [move[0], parseInt(move[1])];
+        for (let m = 0; m < moveParsed[1]; ++m) {
+            switch (move[0]) {
+                case 'U':
+                    ++currentPositions[0][0];
+                    break;
+                case 'D':
+                    --currentPositions[0][0];
+                    break;
+                case 'L':
+                    ++currentPositions[0][1];
+                    break;
+                case 'R':
+                    --currentPositions[0][1];
+                    break;
+            }
+    
+            let moves = [];
+            for (let i = 0; i < knots - 1; ++i) {
+                moves = followTarget(currentPositions[i + 1], currentPositions[i]);
+            }
+            for (let i = 0; i < moves.length; ++i) {
+                visitedPositions.set(moves[i][0] + ":" + moves[i][1], true);
+            }
         }
-
-        let moves = [];
-        for (let i = 0; i < knots - 1; ++i) {
-            moves = followTarget(currentPositions[i + 1], currentPositions[i]);
-        }
-        for (let i = 0; i < moves.length; ++i) {
-            visitedPositions.set(moves[i][0] + ":" + moves[i][1], true);
-        }
-    }
-
-    for (let i = 15; i > -15; --i) {
-        let line = "";
-        for (let j = -15; j < 15; ++j) {
-            if (visitedPositions.has(i + ":" + j)) line += "#"
-            else line += "."
-        }
-        console.log(line)
     }
 
     return visitedPositions.size;
