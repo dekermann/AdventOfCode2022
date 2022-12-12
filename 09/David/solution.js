@@ -60,7 +60,6 @@ function snake(input, knots) {
     return visitedPositions.size;
 }
 
-// 2696 too high
 console.log(`Total rows ${rows.length}`);
 console.log(`part 1 > ${snake(rows, 2)}`);
 console.log(`part 2 > ${snake(rows, 10)}`);
