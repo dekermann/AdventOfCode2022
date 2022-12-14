@@ -29,102 +29,62 @@ function initGrid(data) {
     return [start, end, grid];
 }
 
-function recursivePathFind(currentPosition, end, grid, visited, currentLength) {
-    console.log(currentPosition)
-    let currentNodesValue = grid[currentPosition[0]][currentPosition[1]];
-    let currentBest = 9999999;
-    // console.log("start")
+function recursiveWeightGraph(currentPosition, grid, result, currentLength) {
+    // Set weight of current position
+    const currentGridElement = grid[currentPosition[0]][currentPosition[1]];
+    if (result[currentPosition[0]][currentPosition[1]] <= currentLength) return;
+    result[currentPosition[0]][currentPosition[1]] = currentLength;
 
-    // Check up
-    if (currentPosition[0] > 0 && !visited.has(currentPosition[0] - 1 + ":" + currentPosition[1])) {
-        // console.log("UP");
-        let adjacentNodeValue = grid[currentPosition[0] - 1][currentPosition[1]];
-        const jump = adjacentNodeValue <= currentNodesValue + 1;
-        // Path possible
-        if (jump) {
-            // console.log("Jump");
-            if (end[0] == [currentPosition[0] - 1] && end[1] == [currentPosition[1]]) {
-                return currentLength;
-            }
-            let newMap = new Map(visited);
-            newMap.set(currentPosition[0] - 1 + ":" + currentPosition[1]);
-            let newLength = recursivePathFind([currentPosition[0] - 1, currentPosition[1]], end, grid, newMap, currentLength + 1);
-            if (newLength < currentBest) {
-                currentBest = newLength;
-            }
+    for (let nextPosition = 0; nextPosition < 4; ++nextPosition) { // 0bXY
+        // Setup X Y next positions
+        const negativePositive = ((nextPosition & 0b1) * 2) - 1;
+        const XorY = ((nextPosition >> 1) & 0b1);
+        const nextYPosition = currentPosition[0] + (negativePositive * XorY);
+        const nextXPosition = currentPosition[1] + (negativePositive * !XorY);
+        if (nextYPosition < 0 || nextYPosition >= grid.length || nextXPosition < 0 || nextXPosition >= grid[0].length) {
+            continue;
         }
-    }
-    
-    // Check down
-    if (currentPosition[0] < grid.length && !visited.has(currentPosition[0] + 1 + ":" + currentPosition[1])) {
-        // console.log("Down");
-        let adjacentNodeValue = grid[currentPosition[0] + 1][currentPosition[1]];
-        const jump = adjacentNodeValue <= currentNodesValue + 1;
-        // Path possible
-        if (jump) {
-            // console.log("Jump");
-            if (end[0] == [currentPosition[0] + 1] && end[1] == [currentPosition[1]]) {
-                return currentLength;
-            }
-            let newMap = new Map(visited);
-            newMap.set(currentPosition[0] + 1 + ":" + currentPosition[1]);
-            let newLength = recursivePathFind([currentPosition[0] + 1, currentPosition[1]], end, grid, newMap, currentLength + 1);
-            if (newLength < currentBest) {
-                currentBest = newLength;
-            }
-        }
-    }
 
-    // Check left
-    if (currentPosition[0] > 0 && !visited.has(currentPosition[0] + ":" + currentPosition[1] - 1)) {
-        // console.log("Left");
-        let adjacentNodeValue = grid[currentPosition[0]][currentPosition[1] - 1];
-        const jump = adjacentNodeValue <= currentNodesValue + 1;
-        // Path possible
-        if (jump) {
-            // console.log("Jump");
-            if (end[0] == [currentPosition[0]] && end[1] == [currentPosition[1] - 1]) {
-                return currentLength;
-            }
-            let newMap = new Map(visited);
-            newMap.set(currentPosition[0] + ":" + currentPosition[1] - 1);
-            let newLength = recursivePathFind([currentPosition[0], currentPosition[1] - 1], end, grid, newMap, currentLength + 1);
-            if (newLength < currentBest) {
-                currentBest = newLength;
-            }
+        const nextGridElement = grid[nextYPosition][nextXPosition];
+
+        if (currentGridElement <= nextGridElement + 1) { // Can move
+            recursiveWeightGraph([nextYPosition, nextXPosition], grid, result, currentLength + 1);
         }
     }
-    
-    // Check right
-    if (currentPosition[0] < grid[0].length && !visited.has(currentPosition[0] + ":" + currentPosition[1] + 1)) {
-        // console.log("Right");
-        let adjacentNodeValue = grid[currentPosition[0]][currentPosition[1] + 1];
-        const jump = adjacentNodeValue <= currentNodesValue + 1;
-        // Path possible
-        if (jump) {
-            // console.log("Jump");
-            if (end[0] == [currentPosition[0]] && end[1] == [currentPosition[1] + 1]) {
-                console.log(currentLength)
-                return currentLength;
-            }
-            let newMap = new Map(visited);
-            newMap.set(currentPosition[0] + ":" + currentPosition[1] + 1);
-            let newLength = recursivePathFind([currentPosition[0], currentPosition[1] + 1], end, grid, newMap, currentLength + 1);
-            if (newLength < currentBest) {
-                currentBest = newLength;
+}
+
+let GridMap = initGrid(data);
+let WeightMap = [...new Array(GridMap[2].length)].map(() => [...new Array(GridMap[2][0].length)].map(() => Number.MAX_SAFE_INTEGER));
+
+recursiveWeightGraph(GridMap[1], GridMap[2], WeightMap, 0);
+
+function findBestStart(grid, weightGrid, startValue) {
+    let currentBest = Number.MAX_SAFE_INTEGER;
+    for (let y = 0; y < grid.length; ++y) {
+        for (let x = 0; x < grid[y].length; ++x) {
+            if (grid[y][x] == startValue && weightGrid[y][x] < currentBest) {
+                currentBest = weightGrid[y][x];
             }
         }
     }
     return currentBest;
 }
 
-function findBestpath(gridMap) {
-    const visitedMap = new Map();
-    visitedMap.set(gridMap[0][0] + ":" + gridMap[0][1], true);
-    return recursivePathFind(gridMap[0], gridMap[1], gridMap[2], visitedMap, 0);
-}
-
-
 console.log(`Total input ${input.length}`);
-let GridMap = initGrid(data);
-console.log(`part 1 > ${findBestpath(GridMap)}`);
+console.log(`part 1 > ${WeightMap[GridMap[0][0]][GridMap[0][1]]}`);
+console.log(`part 2 > ${findBestStart(GridMap[2], WeightMap, 0)}`);
+
+// Bonus Print
+
+// for (let y = 0; y < WeightMap.length; ++y) {
+//     let s = "";
+//     for (let x = 0; x < WeightMap[y].length; ++x) {
+//         if (WeightMap[y][x] == Number.MAX_SAFE_INTEGER) s += "    ";
+//         else {
+//             s += WeightMap[y][x] + " ";
+//             if (WeightMap[y][x] < 9) s += " ";
+//             if (WeightMap[y][x] < 99) s += " ";
+//         }
+//     }
+//     console.log(s);
+// }
